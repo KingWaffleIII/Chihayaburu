@@ -1,0 +1,36 @@
+{
+	"name": "chihayaburu",
+	"version": "2.0.0",
+	"description": "Discord bot that automates HoYoLab check-ins.",
+	"main": "bot.js",
+	"scripts": {
+		"format": "npx prettier src --write",
+		"lint": "npx eslint --cache src --ext .ts --fix",
+		"prebuild": "npm run format && npm run lint",
+		"build": "tsc",
+		"prod": "npm i && npm run build",
+		"start": "node .",
+		"quickstart": "tsc && docker compose up -d"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/KingWaffleIII/chihayaburu.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/KingWaffleIII/chihayaburu/issues"
+	},
+	"homepage": "https://github.com/KingWaffleIII/chihayaburu#readme",
+	"dependencies": {
+		"@rthelolchex/genshininfo_scraper": "^1.1.6",
+		"cron": "^2.2.0",
+		"discord.js": "^14.8.0",
+		"sequelize": "^6.29.3",
+		"sqlite3": "^5.1.6"
+	},
+	"devDependencies": {
+		"@types/cron": "^2.0.0"
+	}
+}
