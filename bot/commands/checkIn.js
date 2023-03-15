@@ -23,9 +23,9 @@ async function execute(interaction) {
     }
     const { ltuid, ltoken } = user;
     const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-    const data = await gi.ClaimDailyCheckIn(cookie);
+    const result = await gi.ClaimDailyCheckIn(cookie);
     // if (data.message === "Traveler, you've already checked in today~")
-    if (data.retcode !== 0) {
+    if (result.retcode !== 0) {
         await interaction.editReply({
             content: "You've already checked in today.",
         });
@@ -40,13 +40,19 @@ async function execute(interaction) {
             autoCheckIn: true,
         });
         const job = new cron_1.CronJob("0 0 0 * * *", async () => {
-            const { ltuid, ltoken } = user;
-            const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-            await gi.ClaimDailyCheckIn(cookie);
-            const dm = await interaction.user.createDM();
-            await dm.send({
-                content: `You've been checked in successfully.`,
-            });
+            let res;
+            try {
+                res = await gi.ClaimDailyCheckIn(cookie);
+            }
+            catch (error) {
+                return;
+            }
+            if (res.retcode === 0) {
+                const dm = await interaction.user.createDM();
+                await dm.send({
+                    content: `You've been checked in successfully.`,
+                });
+            }
         });
         job.start();
         await interaction.followUp({

@@ -38,10 +38,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
 
-	const data: CheckInData = await gi.ClaimDailyCheckIn(cookie);
+	const result: CheckInData = await gi.ClaimDailyCheckIn(cookie);
 
 	// if (data.message === "Traveler, you've already checked in today~")
-	if (data.retcode !== 0) {
+	if (result.retcode !== 0) {
 		await interaction.editReply({
 			content: "You've already checked in today.",
 		});
@@ -56,14 +56,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			autoCheckIn: true,
 		});
 		const job = new CronJob("0 0 0 * * *", async () => {
-			const { ltuid, ltoken } = user;
-			const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-			await gi.ClaimDailyCheckIn(cookie);
+			let res;
+			try {
+				res = await gi.ClaimDailyCheckIn(cookie);
+			} catch (error) {
+				return;
+			}
 
-			const dm = await interaction.user.createDM();
-			await dm.send({
-				content: `You've been checked in successfully.`,
-			});
+			if (res.retcode === 0) {
+				const dm = await interaction.user.createDM();
+				await dm.send({
+					content: `You've been checked in successfully.`,
+				});
+			}
 		});
 
 		job.start();

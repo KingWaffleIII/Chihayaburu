@@ -1,6 +1,6 @@
 services:
     bot:
-        container_name: plane_bot
+        container_name: chihayaburu_bot
         image: node:slim
         volumes:
             - ./bot/:/bot/

@@ -119,24 +119,28 @@ const rest = new REST({ version: "10" }).setToken(token);
 	const users = await User.findAll();
 	for (const user of users) {
 		if (user.autoCheckIn) {
+			const u = await client.users.fetch(user.id);
+			const dm = await u.createDM();
+
 			const { ltuid, ltoken } = user;
 			const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
 			await gi.ClaimDailyCheckIn(cookie);
 
 			const job = new CronJob("0 0 0 * * *", async () => {
-				const { ltuid, ltoken } = user;
-				const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-				await gi.ClaimDailyCheckIn(cookie);
+				let result;
+				try {
+					result = await gi.ClaimDailyCheckIn(cookie);
+				} catch (error) {
+					return;
+				}
 
-				const dm = await (await client.users.fetch(user.id)).createDM();
-				await dm.send({
-					content: `You've been checked in successfully.`,
-				});
+				if (result.retcode === 0) {
+					await dm.send({
+						content: `You've been checked in successfully.`,
+					});
+				}
 			});
 			job.start();
-
-			const u = await client.users.fetch(user.id);
-			const dm = await u.createDM();
 
 			await dm.send({
 				content:

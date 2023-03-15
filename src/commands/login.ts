@@ -42,9 +42,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	await User.create({
 		id: interaction.user.id,
 		username: interaction.user.username,
-		uid: uid,
-		ltuid: ltuid,
-		ltoken: ltoken,
+		uid,
+		ltuid,
+		ltoken,
 		autoCheckIn: false,
 	});
 

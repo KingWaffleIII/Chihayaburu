@@ -88,21 +88,26 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
     const users = await models_1.User.findAll();
     for (const user of users) {
         if (user.autoCheckIn) {
+            const u = await client.users.fetch(user.id);
+            const dm = await u.createDM();
             const { ltuid, ltoken } = user;
             const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
             await gi.ClaimDailyCheckIn(cookie);
             const job = new cron_1.CronJob("0 0 0 * * *", async () => {
-                const { ltuid, ltoken } = user;
-                const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-                await gi.ClaimDailyCheckIn(cookie);
-                const dm = await (await client.users.fetch(user.id)).createDM();
-                await dm.send({
-                    content: `You've been checked in successfully.`,
-                });
+                let result;
+                try {
+                    result = await gi.ClaimDailyCheckIn(cookie);
+                }
+                catch (error) {
+                    return;
+                }
+                if (result.retcode === 0) {
+                    await dm.send({
+                        content: `You've been checked in successfully.`,
+                    });
+                }
             });
             job.start();
-            const u = await client.users.fetch(user.id);
-            const dm = await u.createDM();
             await dm.send({
                 content: "Unfortunately, there has been a problem and your automatic check-in was temporarily unavailable. Apologies for the inconvenience; your timer has been reset and you will now be automatically checked-in again.",
             });

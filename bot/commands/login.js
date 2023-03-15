@@ -33,9 +33,9 @@ async function execute(interaction) {
     await models_1.User.create({
         id: interaction.user.id,
         username: interaction.user.username,
-        uid: uid,
-        ltuid: ltuid,
-        ltoken: ltoken,
+        uid,
+        ltuid,
+        ltoken,
         autoCheckIn: false,
     });
     await interaction.editReply({
