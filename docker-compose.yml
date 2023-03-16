@@ -10,4 +10,3 @@ services:
             - ./src/assets/:/bot/assets/
         working_dir: /bot
         entrypoint: /bot/entrypoint.sh
-        restart: always

@@ -23,6 +23,7 @@ export class User extends Model<
 	declare ltuid: string;
 	declare ltoken: string;
 	declare autoCheckIn: boolean;
+	declare disableDmAlerts: boolean;
 
 	// createdAt can be undefined during creation
 	declare createdAt: CreationOptional<Date>;
@@ -54,6 +55,11 @@ User.init(
 			allowNull: false,
 		},
 		autoCheckIn: {
+			type: DataTypes.BOOLEAN,
+			allowNull: false,
+			defaultValue: false,
+		},
+		disableDmAlerts: {
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,

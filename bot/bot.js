@@ -101,10 +101,25 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
                 catch (error) {
                     return;
                 }
-                if (result.retcode === 0) {
-                    await dm.send({
-                        content: `You've been checked in successfully.`,
-                    });
+                if (!user.disableDmAlerts) {
+                    switch (result.retcode) {
+                        case 0: {
+                            await dm.send("You've been checked in successfully.");
+                            break;
+                        }
+                        case -10: {
+                            await dm.send("Your ltuid and ltoken are invalid. Please check that they are correct.");
+                            break;
+                        }
+                        case -5003: {
+                            await dm.send("You've already checked in today.");
+                            break;
+                        }
+                        default: {
+                            await dm.send(`An error occurred while checking you in.`);
+                            break;
+                        }
+                    }
                 }
             });
             job.start();

@@ -37,6 +37,7 @@ async function execute(interaction) {
         ltuid,
         ltoken,
         autoCheckIn: false,
+        disableDmAlerts: false,
     });
     await interaction.editReply({
         content: "Account created successfully.",
