@@ -86,6 +86,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			autoCheckIn: true,
 		});
 		const job = new CronJob("0 0 0 * * *", async () => {
+			await user.reload();
+
 			let res;
 			try {
 				res = await gi.ClaimDailyCheckIn(cookie);

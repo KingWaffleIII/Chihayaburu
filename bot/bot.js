@@ -94,6 +94,7 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
             const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
             await gi.ClaimDailyCheckIn(cookie);
             const job = new cron_1.CronJob("0 0 0 * * *", async () => {
+                await user.reload();
                 let result;
                 try {
                     result = await gi.ClaimDailyCheckIn(cookie);
@@ -124,7 +125,7 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
             });
             job.start();
             await dm.send({
-                content: "Unfortunately, there has been a problem and your automatic check-in was temporarily unavailable. Apologies for the inconvenience; your timer has been reset and you will now be automatically checked-in again.",
+                content: "Unfortunately, there has been a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). Apologies for the inconvenience; your timer has been reset and you will now be automatically checked-in again.",
             });
         }
     }
