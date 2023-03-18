@@ -13,7 +13,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const embed = new EmbedBuilder()
 		.setColor(0x0099ff)
-		.setTitle("Chihayaburu v2.0.1")
+		.setTitle("Chihayaburu v2.1.0")
 		.setURL("https://github.com/KingWaffleIII/chihayaburu")
 		.setAuthor({
 			name: "KingWaffleIII @ PlanetWaffle",
