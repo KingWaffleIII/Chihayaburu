@@ -42,6 +42,10 @@ User.init({
         allowNull: false,
         defaultValue: false,
     },
+    lastCheckIn: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
     createdAt: sequelize_1.DataTypes.DATE,
     updatedAt: sequelize_1.DataTypes.DATE,
 }, {

@@ -63,6 +63,7 @@ async function execute(interaction) {
             let res;
             try {
                 res = await gi.ClaimDailyCheckIn(cookie);
+                await user.update({ lastCheckIn: new Date() });
             }
             catch (error) {
                 return;

@@ -98,6 +98,7 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
                 let result;
                 try {
                     result = await gi.ClaimDailyCheckIn(cookie);
+                    await user.update({ lastCheckIn: new Date() });
                 }
                 catch (error) {
                     return;
@@ -124,8 +125,13 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
                 }
             });
             job.start();
+            const diff = (new Date().getTime() - user.lastCheckIn.getTime()) /
+                1000 /
+                60 /
+                60 /
+                24;
             await dm.send({
-                content: "Unfortunately, there has been a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). Apologies for the inconvenience; your timer has been reset and you will now be automatically checked-in again.",
+                content: `Unfortunately, there was a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). You were last checked in approx. **${Math.floor(diff)} days ago**. Your timer has restarted and you will now be automatically checked in again.`,
             });
         }
     }
