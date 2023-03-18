@@ -8,7 +8,7 @@ exports.data = new discord_js_1.SlashCommandBuilder()
 async function execute(interaction) {
     const embed = new discord_js_1.EmbedBuilder()
         .setColor(0x0099ff)
-        .setTitle("Chihayaburu v2.0.0")
+        .setTitle("Chihayaburu v2.0.1")
         .setURL("https://github.com/KingWaffleIII/chihayaburu")
         .setAuthor({
         name: "KingWaffleIII @ PlanetWaffle",

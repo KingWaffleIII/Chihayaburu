@@ -59,6 +59,7 @@ async function execute(interaction) {
             autoCheckIn: true,
         });
         const job = new cron_1.CronJob("0 0 0 * * *", async () => {
+            await user.reload();
             let res;
             try {
                 res = await gi.ClaimDailyCheckIn(cookie);
