@@ -25,6 +25,8 @@ export class User extends Model<
 	declare autoCheckIn: boolean;
 	declare disableDmAlerts: boolean;
 
+	declare lastCheckIn?: Date | null;
+
 	// createdAt can be undefined during creation
 	declare createdAt: CreationOptional<Date>;
 	// updatedAt can be undefined during creation
@@ -63,6 +65,10 @@ User.init(
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,
+		},
+		lastCheckIn: {
+			type: DataTypes.DATE,
+			allowNull: true,
 		},
 		createdAt: DataTypes.DATE,
 		updatedAt: DataTypes.DATE,
