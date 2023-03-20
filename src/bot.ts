@@ -134,6 +134,7 @@ const rest = new REST({ version: "10" }).setToken(token);
 					result = await gi.ClaimDailyCheckIn(cookie);
 					await user.update({ lastCheckIn: new Date() });
 				} catch (error) {
+					console.error(error);
 					return;
 				}
 
@@ -159,6 +160,7 @@ const rest = new REST({ version: "10" }).setToken(token);
 							await dm.send(
 								`An error occurred while checking you in.`
 							);
+							console.error(result);
 							break;
 						}
 					}

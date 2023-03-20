@@ -93,6 +93,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				res = await gi.ClaimDailyCheckIn(cookie);
 				await user.update({ lastCheckIn: new Date() });
 			} catch (error) {
+				console.error(error);
 				return;
 			}
 
@@ -117,6 +118,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 						await dm.send(
 							`An error occurred while checking you in.`
 						);
+						console.error(res);
 						break;
 					}
 				}
@@ -128,7 +130,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await interaction.followUp({
 			content: "Automatic daily check-in has been enabled.",
 		});
-	} else if (user.autoCheckIn) {
+	} else if (enableAutoCheckIn && user.autoCheckIn) {
 		await interaction.followUp({
 			content: "Automatic daily check-in is already enabled.",
 		});
