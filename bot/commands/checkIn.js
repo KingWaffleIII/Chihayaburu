@@ -66,6 +66,7 @@ async function execute(interaction) {
                 await user.update({ lastCheckIn: new Date() });
             }
             catch (error) {
+                console.error(error);
                 return;
             }
             if (!user.disableDmAlerts) {
@@ -85,6 +86,7 @@ async function execute(interaction) {
                     }
                     default: {
                         await dm.send(`An error occurred while checking you in.`);
+                        console.error(res);
                         break;
                     }
                 }
@@ -95,7 +97,7 @@ async function execute(interaction) {
             content: "Automatic daily check-in has been enabled.",
         });
     }
-    else if (user.autoCheckIn) {
+    else if (enableAutoCheckIn && user.autoCheckIn) {
         await interaction.followUp({
             content: "Automatic daily check-in is already enabled.",
         });

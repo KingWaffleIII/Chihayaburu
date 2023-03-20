@@ -101,6 +101,7 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
                     await user.update({ lastCheckIn: new Date() });
                 }
                 catch (error) {
+                    console.error(error);
                     return;
                 }
                 if (!user.disableDmAlerts) {
@@ -119,6 +120,7 @@ const rest = new discord_js_1.REST({ version: "10" }).setToken(config_json_1.tok
                         }
                         default: {
                             await dm.send(`An error occurred while checking you in.`);
+                            console.error(result);
                             break;
                         }
                     }
