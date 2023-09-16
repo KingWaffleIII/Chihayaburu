@@ -1,16 +1,10 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-import { User } from "../models";
+import { User } from "../models.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("login")
 	.setDescription("Create a user account.")
-	.addStringOption((option) =>
-		option
-			.setName("uid")
-			.setDescription("Your Genshin UID.")
-			.setRequired(true)
-	)
 	.addStringOption((option) =>
 		option
 			.setName("ltuid")
@@ -25,7 +19,6 @@ export const data = new SlashCommandBuilder()
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	const uid = interaction.options.getString("uid")!;
 	const ltuid = interaction.options.getString("ltuid")!;
 	const ltoken = interaction.options.getString("ltoken")!;
 
@@ -42,7 +35,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	await User.create({
 		id: interaction.user.id,
 		username: interaction.user.username,
-		uid,
 		ltuid,
 		ltoken,
 		autoCheckIn: false,

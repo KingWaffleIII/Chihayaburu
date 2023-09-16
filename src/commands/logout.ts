@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-import { User } from "../models";
+import { User } from "../models.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("logout")

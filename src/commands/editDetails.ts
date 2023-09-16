@@ -1,13 +1,10 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-import { User } from "../models";
+import { User } from "../models.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("edit-details")
 	.setDescription("Edits your user account details.")
-	.addStringOption((option) =>
-		option.setName("uid").setDescription("Your Genshin UID.")
-	)
 	.addStringOption((option) =>
 		option.setName("ltuid").setDescription("Your HoYoLab LTUID.")
 	)
@@ -16,7 +13,6 @@ export const data = new SlashCommandBuilder()
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	const uid = interaction.options.getString("uid") ?? null;
 	const ltuid = interaction.options.getString("ltuid") ?? null;
 	const ltoken = interaction.options.getString("ltoken") ?? null;
 
@@ -30,9 +26,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		return;
 	}
 
-	if (uid) {
-		user.uid = uid;
-	}
 	if (ltuid) {
 		user.ltuid = ltuid;
 	}

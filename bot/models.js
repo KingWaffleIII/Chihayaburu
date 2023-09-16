@@ -1,54 +1,46 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.db = void 0;
-const sequelize_1 = require("sequelize");
-exports.db = new sequelize_1.Sequelize({
+import { DataTypes, Model, Sequelize, } from "sequelize";
+export const db = new Sequelize({
     dialect: "sqlite",
     storage: "db.sqlite",
     logging: false,
 });
-class User extends sequelize_1.Model {
+export class User extends Model {
 }
-exports.User = User;
 User.init({
     id: {
-        type: sequelize_1.DataTypes.STRING,
+        type: DataTypes.STRING,
         autoIncrement: false,
         primaryKey: true,
     },
     username: {
-        type: sequelize_1.DataTypes.STRING(32),
-        allowNull: false,
-    },
-    uid: {
-        type: sequelize_1.DataTypes.STRING,
+        type: DataTypes.STRING(32),
         allowNull: false,
     },
     ltuid: {
-        type: sequelize_1.DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
     },
     ltoken: {
-        type: sequelize_1.DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
     },
     autoCheckIn: {
-        type: sequelize_1.DataTypes.BOOLEAN,
+        type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
     },
     disableDmAlerts: {
-        type: sequelize_1.DataTypes.BOOLEAN,
+        type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
     },
     lastCheckIn: {
-        type: sequelize_1.DataTypes.DATE,
+        type: DataTypes.DATE,
         allowNull: true,
     },
-    createdAt: sequelize_1.DataTypes.DATE,
-    updatedAt: sequelize_1.DataTypes.DATE,
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
 }, {
-    sequelize: exports.db,
+    sequelize: db,
     tableName: "Users",
 });

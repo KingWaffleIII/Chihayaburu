@@ -1,14 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.execute = exports.data = void 0;
-const discord_js_1 = require("discord.js");
-exports.data = new discord_js_1.SlashCommandBuilder()
+import { EmbedBuilder, SlashCommandBuilder, } from "discord.js";
+export const data = new SlashCommandBuilder()
     .setName("help")
     .setDescription("Information about Chihayaburu, how to get your cookie and how to contact the developer.");
-async function execute(interaction) {
-    const embed = new discord_js_1.EmbedBuilder()
+export async function execute(interaction) {
+    const embed = new EmbedBuilder()
         .setColor(0x0099ff)
-        .setTitle("Chihayaburu v2.1.1")
+        .setTitle("Chihayaburu v3.0.0")
         .setURL("https://github.com/KingWaffleIII/chihayaburu")
         .setAuthor({
         name: "KingWaffleIII @ PlanetWaffle",
@@ -16,18 +13,18 @@ async function execute(interaction) {
         url: "https://github.com/KingWaffleIII/",
     })
         .setDescription(`
-A Discord bot that automates HoYoLab check-ins.
+A Discord bot that automates HoYoLab check-ins (Genshin Impact and Honkai: Star Rail).
 \n
 __**Obtaining a token**__
-Every endpoint in miHoYo's API requires authentication, this is in the form of a cookie.
+Every endpoint in HoYoVerse's API requires authentication, this is in the form of a cookie.
 
-Getting your cookie is really simple. All you need to do is is head to https://hoyolab.com and log in. 
+Getting your cookie is really simple. All you need to do is is head to https://www.hoyolab.com/accountCenter/ and log in. 
 Then, you open Developer Tools with CTRL+SHIFT+I and open the console tab and paste the following: 
 \`\`\`js
-    javascript:(function(){var script=document.createElement("script");script.src="//cdn.takagg.com/eruda-v1/eruda.js";document.body.appendChild(script);script.onload=function(){eruda.init()}})();
+javascript:(function(){var script=document.createElement("script");script.src="//cdn.takagg.com/eruda-v1/eruda.js";document.body.appendChild(script);script.onload=function(){eruda.init()}})();
 \`\`\`
 (credit to TakaGG) 
-This will create a settings icon in the bottom right corner - simply click on it and you will find your ltuid and ltoken.
+This will create a settings icon in the bottom right corner - simply click on it and look for \`ltuid\` and \`ltoken\`. This is your ID and token respectively.
 \n
 __**Known issues/suggestions**__
 https://github.com/KingWaffleIII/chihayaburu/issues
@@ -50,4 +47,3 @@ __**Credits**__
     });
     await interaction.reply({ embeds: [embed] });
 }
-exports.execute = execute;

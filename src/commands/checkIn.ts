@@ -1,15 +1,123 @@
 import { CronJob } from "cron";
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+	ChatInputCommandInteraction,
+	EmbedBuilder,
+	SlashCommandBuilder,
+} from "discord.js";
+import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 
-import { User } from "../models";
+import { User } from "../models.js";
+import { createCheckInJob } from "../createCheckInJob.js";
 
-const gi = require("@rthelolchex/genshininfo_scraper");
+const doCheckIn = async (
+	interaction: ChatInputCommandInteraction,
+	user: User,
+	account: GenshinImpact | HonkaiStarRail,
+	enableAutoCheckIn: boolean,
+	disableDmAlerts: boolean
+) => {
+	const game = account instanceof GenshinImpact ? "GI" : "HSR";
 
-interface CheckInData {
-	retcode: number;
-	message: string;
-	data: unknown;
-}
+	try {
+		const result = await account.daily.claim();
+		await user.update({ lastCheckIn: new Date() });
+
+		const monthRewards = await account.daily.rewards();
+
+		const reward = monthRewards.awards[result.info.total_sign_day - 1];
+
+		switch (result.code) {
+			case 0: {
+				const embed = new EmbedBuilder()
+					.setTitle(`${game}: You've been checked in!`)
+					.setDescription(`You got ${reward.name} x${reward.cnt}!`)
+					.addFields(
+						{
+							name: "Streak:",
+							value: `${result.info.total_sign_day} days`,
+							inline: true,
+						},
+						{
+							name: "Missed:",
+							value: `${result.info.sign_cnt_missed} days`,
+							inline: true,
+						},
+						{ name: "\u200B", value: "\u200B" },
+						{
+							name: "Auto check-in:",
+							value: enableAutoCheckIn ? "Enabled" : "Disabled",
+							inline: true,
+						},
+						{
+							name: "DM alerts:",
+							value: disableDmAlerts ? "Disabled" : "Enabled",
+							inline: true,
+						}
+					)
+					.setThumbnail(reward.icon)
+					.setTimestamp()
+					.setFooter({
+						text: `${game} - Check In`,
+						iconURL: "https://i.imgur.com/pq6ejR9.png",
+					});
+
+				if (account instanceof GenshinImpact) embed.setColor(0xffffff);
+				else embed.setColor(0x0c1445);
+
+				await interaction.followUp({ embeds: [embed] });
+				break;
+			}
+			case -5003: {
+				const embed = new EmbedBuilder()
+					.setTitle(`${game}: You've already checked in today!`)
+					.addFields(
+						{
+							name: "Streak:",
+							value: `${result.info.total_sign_day} days`,
+							inline: true,
+						},
+						{
+							name: "Missed:",
+							value: `${result.info.sign_cnt_missed} days`,
+							inline: true,
+						},
+						{ name: "\u200B", value: "\u200B" },
+						{
+							name: "Auto check-in:",
+							value: enableAutoCheckIn ? "Enabled" : "Disabled",
+							inline: true,
+						},
+						{
+							name: "DM alerts:",
+							value: disableDmAlerts ? "Disabled" : "Enabled",
+							inline: true,
+						}
+					)
+					.setTimestamp()
+					.setFooter({
+						text: `${game} - Check In`,
+						iconURL: "https://i.imgur.com/pq6ejR9.png",
+					});
+
+				if (account instanceof GenshinImpact) embed.setColor(0xffffff);
+				else embed.setColor(0x0c1445);
+
+				await interaction.followUp({ embeds: [embed] });
+				break;
+			}
+			default: {
+				await interaction.editReply(
+					`An error occurred while checking you in: ${result.status}. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+				);
+				break;
+			}
+		}
+	} catch (error) {
+		await interaction.editReply(
+			`An error occurred while checking you in. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+		);
+	}
+};
 
 export const data = new SlashCommandBuilder()
 	.setName("check-in")
@@ -38,101 +146,50 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const user = await User.findByPk(interaction.user.id);
 	if (!user) {
 		await interaction.editReply({
-			content: "You don't have an account.",
+			content: "You don't have an genshin.",
 		});
 		return;
 	}
 
 	const { ltuid, ltoken } = user;
 
-	const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
+	const genshin = new GenshinImpact({
+		cookie: {
+			ltuid: parseInt(ltuid),
+			ltoken,
+		},
+		lang: LanguageEnum.ENGLISH,
+	});
 
-	const result: CheckInData = await gi.ClaimDailyCheckIn(cookie);
+	await doCheckIn(
+		interaction,
+		user,
+		genshin,
+		enableAutoCheckIn,
+		disableDmAlerts
+	);
 
-	switch (result.retcode) {
-		case 0: {
-			await interaction.editReply("You've been checked in successfully.");
-			break;
-		}
-		case -10: {
-			await interaction.editReply(
-				"Your ltuid and ltoken are invalid. Please check that they are correct."
-			);
-			break;
-		}
-		case -5003: {
-			await interaction.editReply("You've already checked in today.");
-			break;
-		}
-		default: {
-			await interaction.editReply(
-				"An error occurred while checking you in."
-			);
-			break;
-		}
-	}
+	const hsr = new HonkaiStarRail({
+		cookie: {
+			ltuid: parseInt(ltuid),
+			ltoken,
+		},
+		lang: LanguageEnum.ENGLISH,
+	});
 
-	if (disableDmAlerts) {
-		await user.update({
-			disableDmAlerts: true,
-		});
-		await interaction.followUp({
-			content: "DM alerts have been disabled.",
-		});
-	}
+	await doCheckIn(interaction, user, hsr, enableAutoCheckIn, disableDmAlerts);
 
+	await user.update({
+		disableDmAlerts,
+	});
+
+	if (!enableAutoCheckIn) await user.update({ autoCheckIn: false });
 	if (enableAutoCheckIn && !user.autoCheckIn) {
 		await user.update({
 			autoCheckIn: true,
 		});
-		const job = new CronJob("0 0 0 * * *", async () => {
-			await user.reload();
 
-			let res;
-			try {
-				res = await gi.ClaimDailyCheckIn(cookie);
-				await user.update({ lastCheckIn: new Date() });
-			} catch (error) {
-				console.error(error);
-				return;
-			}
-
-			if (!user.disableDmAlerts) {
-				const dm = await interaction.user.createDM();
-				switch (res.retcode) {
-					case 0: {
-						await dm.send("You've been checked in successfully.");
-						break;
-					}
-					case -10: {
-						await dm.send(
-							"Your ltuid and ltoken are invalid. Please check that they are correct."
-						);
-						break;
-					}
-					case -5003: {
-						await dm.send("You've already checked in today.");
-						break;
-					}
-					default: {
-						await dm.send(
-							`An error occurred while checking you in.`
-						);
-						console.error(res);
-						break;
-					}
-				}
-			}
-		});
-
+		const job = await createCheckInJob(interaction.client, user);
 		job.start();
-
-		await interaction.followUp({
-			content: "Automatic daily check-in has been enabled.",
-		});
-	} else if (enableAutoCheckIn && user.autoCheckIn) {
-		await interaction.followUp({
-			content: "Automatic daily check-in is already enabled.",
-		});
 	}
 }
