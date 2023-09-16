@@ -1,8 +1,10 @@
+/* eslint-disable no-underscore-dangle */
 import { CronJob } from "cron";
 import {
 	ActivityType,
 	Client,
 	Collection,
+	EmbedBuilder,
 	Events,
 	GatewayIntentBits,
 	Interaction,
@@ -12,12 +14,13 @@ import {
 	ThreadChannel,
 } from "discord.js";
 import fs from "fs";
-import path from "path";
+import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 
-import { db, User } from "./models";
-import { clientId, token } from "./config.json";
-
-const gi = require("@rthelolchex/genshininfo_scraper");
+import { db, User } from "./models.js";
+import { doCheckIn, createCheckInJob } from "./createCheckInJob.js";
+import config from "./config.json" assert { type: "json" };
 
 interface Command {
 	data: SlashCommandBuilder;
@@ -39,13 +42,16 @@ const client: Client = new Client({
 
 const commands: Collection<string, Command> = new Collection();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const commandsPath = path.join(__dirname, "commands");
+
 const commandFiles = fs
 	.readdirSync(commandsPath)
 	.filter((file) => file.endsWith(".js"));
 for (const file of commandFiles) {
 	const filePath = path.join(commandsPath, file);
-	const command: Command = require(filePath);
+	const command: Command = await import(filePath);
 	if ("data" in command && "execute" in command) {
 		commands.set(command.data.name, command);
 	} else {
@@ -61,17 +67,6 @@ client.on(Events.ClientReady, (bot) => {
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	if (!interaction.isChatInputCommand()) return;
-	// if (
-	// 	interaction.guild === null ||
-	// 	interaction.channel instanceof ThreadChannel
-	// ) {
-	// 	await interaction.reply({
-	// 		content:
-	// 			"This command is not available. Please use it in a normal server channel instead.",
-	// 		ephemeral: true,
-	// 	});
-	// 	return;
-	// }
 
 	const command = commands.get(interaction.commandName);
 
@@ -93,92 +88,71 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 	}
 });
 
-const rest = new REST({ version: "10" }).setToken(token);
-(async () => {
-	try {
-		const commandsList: Array<object> = commands.map((command) =>
-			command.data.toJSON()
-		);
+const { token, clientId } = config;
 
-		await rest.put(Routes.applicationCommands(clientId), {
-			body: commandsList,
+const rest = new REST({ version: "10" }).setToken(token);
+try {
+	const commandsList: Array<object> = commands.map((command) =>
+		command.data.toJSON()
+	);
+
+	await rest.put(Routes.applicationCommands(clientId), {
+		body: commandsList,
+	});
+
+	console.log(
+		`Successfully reloaded ${commandsList.length} application (/) commands.`
+	);
+} catch (error) {
+	console.error(error);
+}
+
+await db.sync();
+
+client.login(token);
+
+// loop through all users and check if they have autoCheckIn enabled
+const users = await User.findAll();
+for (const user of users) {
+	if (user.autoCheckIn) {
+		const discord = await client.users.fetch(user.id);
+		const dm = await discord.createDM();
+
+		const diff =
+			(new Date().getTime() - user.lastCheckIn!.getTime()) /
+			1000 /
+			60 /
+			60 /
+			24;
+		await dm.send({
+			content: `Unfortunately, there was a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). You were last checked in approx. **${Math.floor(
+				diff
+			)} days ago**. Your timer has restarted and you will now be automatically checked in again.`,
 		});
 
-		console.log(
-			`Successfully reloaded ${commandsList.length} application (/) commands.`
-		);
-	} catch (error) {
-		console.error(error);
+		const { ltuid, ltoken } = user;
+
+		const genshin = new GenshinImpact({
+			cookie: {
+				ltuid: parseInt(ltuid),
+				ltoken,
+			},
+			lang: LanguageEnum.ENGLISH,
+		});
+
+		await doCheckIn(dm, user, genshin);
+
+		const hsr = new HonkaiStarRail({
+			cookie: {
+				ltuid: parseInt(ltuid),
+				ltoken,
+			},
+			lang: LanguageEnum.ENGLISH,
+		});
+
+		await doCheckIn(dm, user, hsr);
+
+		const job = await createCheckInJob(client, user);
+		job.start();
 	}
-
-	await db.sync();
-
-	client.login(token);
-
-	// loop through all users and check if they have autoCheckIn enabled
-	const users = await User.findAll();
-	for (const user of users) {
-		if (user.autoCheckIn) {
-			const u = await client.users.fetch(user.id);
-			const dm = await u.createDM();
-
-			const { ltuid, ltoken } = user;
-			const cookie = `ltuid=${ltuid};ltoken=${ltoken}`;
-			await gi.ClaimDailyCheckIn(cookie);
-
-			const job = new CronJob("0 0 0 * * *", async () => {
-				await user.reload();
-
-				let result;
-				try {
-					result = await gi.ClaimDailyCheckIn(cookie);
-					await user.update({ lastCheckIn: new Date() });
-				} catch (error) {
-					console.error(error);
-					return;
-				}
-
-				if (!user.disableDmAlerts) {
-					switch (result.retcode) {
-						case 0: {
-							await dm.send(
-								"You've been checked in successfully."
-							);
-							break;
-						}
-						case -10: {
-							await dm.send(
-								"Your ltuid and ltoken are invalid. Please check that they are correct."
-							);
-							break;
-						}
-						case -5003: {
-							await dm.send("You've already checked in today.");
-							break;
-						}
-						default: {
-							await dm.send(
-								`An error occurred while checking you in.`
-							);
-							console.error(result);
-							break;
-						}
-					}
-				}
-			});
-			job.start();
-
-			const diff =
-				(new Date().getTime() - user.lastCheckIn!.getTime()) /
-				1000 /
-				60 /
-				60 /
-				24;
-			await dm.send({
-				content: `Unfortunately, there was a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). You were last checked in approx. **${Math.floor(
-					diff
-				)} days ago**. Your timer has restarted and you will now be automatically checked in again.`,
-			});
-		}
-	}
-})();
+}

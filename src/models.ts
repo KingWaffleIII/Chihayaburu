@@ -19,7 +19,6 @@ export class User extends Model<
 > {
 	declare id: string;
 	declare username: string;
-	declare uid: string;
 	declare ltuid: string;
 	declare ltoken: string;
 	declare autoCheckIn: boolean;
@@ -42,10 +41,6 @@ User.init(
 		},
 		username: {
 			type: DataTypes.STRING(32),
-			allowNull: false,
-		},
-		uid: {
-			type: DataTypes.STRING,
 			allowNull: false,
 		},
 		ltuid: {
