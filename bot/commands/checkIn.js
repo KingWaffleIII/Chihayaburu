@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder, } from "discord.js";
 import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
-import { User } from "../models.js";
 import { createCheckInJob } from "../createCheckInJob.js";
+import { User } from "../models.js";
 const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableDmAlerts) => {
     const game = account instanceof GenshinImpact ? "GI" : "HSR";
     try {
@@ -28,7 +28,7 @@ const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableD
                     inline: true,
                 }, {
                     name: "DM alerts:",
-                    value: disableDmAlerts ? "Disabled" : "Enabled",
+                    value: disableDmAlerts ? "Enabled" : "Disabled",
                     inline: true,
                 })
                     .setThumbnail(reward.icon)
@@ -61,7 +61,7 @@ const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableD
                     inline: true,
                 }, {
                     name: "DM alerts:",
-                    value: disableDmAlerts ? "Disabled" : "Enabled",
+                    value: disableDmAlerts ? "Enabled" : "Disabled",
                     inline: true,
                 })
                     .setTimestamp()
@@ -77,7 +77,7 @@ const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableD
                 break;
             }
             default: {
-                await interaction.editReply(`An error occurred while checking you in: ${result.status}. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`);
+                await interaction.editReply(`An error occurred while checking you in: \`${result.status}\`. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`);
                 break;
             }
         }
@@ -91,21 +91,23 @@ export const data = new SlashCommandBuilder()
     .setDescription("Checks you into HoYoLab.")
     .addBooleanOption((option) => option
     .setName("enable_auto_check_in")
-    .setDescription("Enables automatic daily check-in. Defaults to false."))
+    .setDescription("Enables automatic daily check-in. Defaults to false if not set."))
     .addBooleanOption((option) => option
     .setName("disable_dm_alerts")
-    .setDescription("Disables DM alerts. Defaults to false"));
+    .setDescription("Disables DM alerts. Defaults to false if not set."));
 export async function execute(interaction) {
-    const enableAutoCheckIn = interaction.options.getBoolean("enable_auto_check_in") ?? false;
-    const disableDmAlerts = interaction.options.getBoolean("disable_dm_alerts") ?? false;
     await interaction.deferReply();
     const user = await User.findByPk(interaction.user.id);
     if (!user) {
         await interaction.editReply({
-            content: "You don't have an genshin.",
+            content: "You don't have an account. Use `/login` first.",
         });
         return;
     }
+    const enableAutoCheckIn = interaction.options.getBoolean("enable_auto_check_in") ??
+        user.autoCheckIn;
+    const disableDmAlerts = interaction.options.getBoolean("disable_dm_alerts") ??
+        user.disableDmAlerts;
     const { ltuid, ltoken } = user;
     const genshin = new GenshinImpact({
         cookie: {
@@ -123,16 +125,12 @@ export async function execute(interaction) {
         lang: LanguageEnum.ENGLISH,
     });
     await doCheckIn(interaction, user, hsr, enableAutoCheckIn, disableDmAlerts);
-    await user.update({
-        disableDmAlerts,
-    });
-    if (!enableAutoCheckIn)
-        await user.update({ autoCheckIn: false });
     if (enableAutoCheckIn && !user.autoCheckIn) {
-        await user.update({
-            autoCheckIn: true,
-        });
         const job = await createCheckInJob(interaction.client, user);
         job.start();
     }
+    await user.update({
+        disableDmAlerts,
+        autoCheckIn: enableAutoCheckIn,
+    });
 }

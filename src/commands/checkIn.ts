@@ -1,4 +1,3 @@
-import { CronJob } from "cron";
 import {
 	ChatInputCommandInteraction,
 	EmbedBuilder,
@@ -6,8 +5,8 @@ import {
 } from "discord.js";
 import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 
-import { User } from "../models.js";
 import { createCheckInJob } from "../createCheckInJob.js";
+import { User } from "../models.js";
 
 const doCheckIn = async (
 	interaction: ChatInputCommandInteraction,
@@ -50,7 +49,7 @@ const doCheckIn = async (
 						},
 						{
 							name: "DM alerts:",
-							value: disableDmAlerts ? "Disabled" : "Enabled",
+							value: disableDmAlerts ? "Enabled" : "Disabled",
 							inline: true,
 						}
 					)
@@ -89,7 +88,7 @@ const doCheckIn = async (
 						},
 						{
 							name: "DM alerts:",
-							value: disableDmAlerts ? "Disabled" : "Enabled",
+							value: disableDmAlerts ? "Enabled" : "Disabled",
 							inline: true,
 						}
 					)
@@ -107,7 +106,7 @@ const doCheckIn = async (
 			}
 			default: {
 				await interaction.editReply(
-					`An error occurred while checking you in: ${result.status}. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+					`An error occurred while checking you in: \`${result.status}\`. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
 				);
 				break;
 			}
@@ -126,30 +125,32 @@ export const data = new SlashCommandBuilder()
 		option
 			.setName("enable_auto_check_in")
 			.setDescription(
-				"Enables automatic daily check-in. Defaults to false."
+				"Enables automatic daily check-in. Defaults to false if not set."
 			)
 	)
 	.addBooleanOption((option) =>
 		option
 			.setName("disable_dm_alerts")
-			.setDescription("Disables DM alerts. Defaults to false")
+			.setDescription("Disables DM alerts. Defaults to false if not set.")
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	const enableAutoCheckIn =
-		interaction.options.getBoolean("enable_auto_check_in") ?? false;
-	const disableDmAlerts =
-		interaction.options.getBoolean("disable_dm_alerts") ?? false;
-
 	await interaction.deferReply();
 
 	const user = await User.findByPk(interaction.user.id);
 	if (!user) {
 		await interaction.editReply({
-			content: "You don't have an genshin.",
+			content: "You don't have an account. Use `/login` first.",
 		});
 		return;
 	}
+
+	const enableAutoCheckIn =
+		interaction.options.getBoolean("enable_auto_check_in") ??
+		user.autoCheckIn;
+	const disableDmAlerts =
+		interaction.options.getBoolean("disable_dm_alerts") ??
+		user.disableDmAlerts;
 
 	const { ltuid, ltoken } = user;
 
@@ -179,17 +180,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	await doCheckIn(interaction, user, hsr, enableAutoCheckIn, disableDmAlerts);
 
-	await user.update({
-		disableDmAlerts,
-	});
-
-	if (!enableAutoCheckIn) await user.update({ autoCheckIn: false });
 	if (enableAutoCheckIn && !user.autoCheckIn) {
-		await user.update({
-			autoCheckIn: true,
-		});
-
 		const job = await createCheckInJob(interaction.client, user);
 		job.start();
 	}
+
+	await user.update({
+		disableDmAlerts,
+		autoCheckIn: enableAutoCheckIn,
+	});
 }
