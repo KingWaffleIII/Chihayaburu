@@ -2,7 +2,7 @@ import { EmbedBuilder, SlashCommandBuilder, } from "discord.js";
 import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import { createCheckInJob } from "../createCheckInJob.js";
 import { User } from "../models.js";
-const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableDmAlerts) => {
+const doCheckIn = async (interaction, user, account, autoCheckIn, dmAlerts) => {
     const game = account instanceof GenshinImpact ? "GI" : "HSR";
     try {
         const result = await account.daily.claim();
@@ -24,11 +24,11 @@ const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableD
                     inline: true,
                 }, { name: "\u200B", value: "\u200B" }, {
                     name: "Auto check-in:",
-                    value: enableAutoCheckIn ? "Enabled" : "Disabled",
+                    value: autoCheckIn ? "Enabled" : "Disabled",
                     inline: true,
                 }, {
                     name: "DM alerts:",
-                    value: disableDmAlerts ? "Enabled" : "Disabled",
+                    value: dmAlerts ? "Enabled" : "Disabled",
                     inline: true,
                 })
                     .setThumbnail(reward.icon)
@@ -57,11 +57,11 @@ const doCheckIn = async (interaction, user, account, enableAutoCheckIn, disableD
                     inline: true,
                 }, { name: "\u200B", value: "\u200B" }, {
                     name: "Auto check-in:",
-                    value: enableAutoCheckIn ? "Enabled" : "Disabled",
+                    value: autoCheckIn ? "Enabled" : "Disabled",
                     inline: true,
                 }, {
                     name: "DM alerts:",
-                    value: disableDmAlerts ? "Enabled" : "Disabled",
+                    value: dmAlerts ? "Enabled" : "Disabled",
                     inline: true,
                 })
                     .setTimestamp()
@@ -90,11 +90,11 @@ export const data = new SlashCommandBuilder()
     .setName("check-in")
     .setDescription("Checks you into HoYoLab.")
     .addBooleanOption((option) => option
-    .setName("enable_auto_check_in")
-    .setDescription("Enables automatic daily check-in. Defaults to false if not set."))
+    .setName("auto_check_in")
+    .setDescription("Enable automatic daily check-in. Defaults to false if not set."))
     .addBooleanOption((option) => option
-    .setName("disable_dm_alerts")
-    .setDescription("Disables DM alerts. Defaults to false if not set."));
+    .setName("dm_alerts")
+    .setDescription("Enables DM alerts. Defaults to true if not set."));
 export async function execute(interaction) {
     await interaction.deferReply();
     const user = await User.findByPk(interaction.user.id);
@@ -104,10 +104,9 @@ export async function execute(interaction) {
         });
         return;
     }
-    const enableAutoCheckIn = interaction.options.getBoolean("enable_auto_check_in") ??
-        user.autoCheckIn;
-    const disableDmAlerts = interaction.options.getBoolean("disable_dm_alerts") ??
-        user.disableDmAlerts;
+    const autoCheckIn = interaction.options.getBoolean("auto_check_in") ?? user.autoCheckIn;
+    const dmAlerts = interaction.options.getBoolean("dm_alerts") ?? user.dmAlerts;
+    console.log(dmAlerts);
     const { ltuid, ltoken } = user;
     const genshin = new GenshinImpact({
         cookie: {
@@ -116,7 +115,7 @@ export async function execute(interaction) {
         },
         lang: LanguageEnum.ENGLISH,
     });
-    await doCheckIn(interaction, user, genshin, enableAutoCheckIn, disableDmAlerts);
+    await doCheckIn(interaction, user, genshin, autoCheckIn, dmAlerts);
     const hsr = new HonkaiStarRail({
         cookie: {
             ltuid: parseInt(ltuid),
@@ -124,13 +123,13 @@ export async function execute(interaction) {
         },
         lang: LanguageEnum.ENGLISH,
     });
-    await doCheckIn(interaction, user, hsr, enableAutoCheckIn, disableDmAlerts);
-    if (enableAutoCheckIn && !user.autoCheckIn) {
+    await doCheckIn(interaction, user, hsr, autoCheckIn, dmAlerts);
+    if (autoCheckIn && !user.autoCheckIn) {
         const job = await createCheckInJob(interaction.client, user);
         job.start();
     }
     await user.update({
-        disableDmAlerts,
-        autoCheckIn: enableAutoCheckIn,
+        dmAlerts,
+        autoCheckIn,
     });
 }

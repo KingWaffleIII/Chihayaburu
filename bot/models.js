@@ -29,10 +29,10 @@ User.init({
         allowNull: false,
         defaultValue: false,
     },
-    disableDmAlerts: {
+    dmAlerts: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false,
+        defaultValue: true,
     },
     lastCheckIn: {
         type: DataTypes.DATE,

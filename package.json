@@ -1,6 +1,6 @@
 {
 	"name": "chihayaburu",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"description": "Discord bot that automates HoYoLab check-ins (Genshin Impact and Honkai: Star Rail).",
 	"main": "bot.js",
 	"type": "module",
@@ -11,7 +11,7 @@
 		"build": "tsc",
 		"prod": "npm i && npm run build",
 		"start": "node bot.js",
-		"quickstart": "docker compose stop && npm i && tsc && docker compose up -d"
+		"quickstart": "docker compose stop && npm i && tsc && docker compose up"
 	},
 	"repository": {
 		"type": "git",

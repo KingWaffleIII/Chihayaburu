@@ -38,7 +38,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		ltuid,
 		ltoken,
 		autoCheckIn: false,
-		disableDmAlerts: false,
+		dmAlerts: false,
 	});
 
 	await interaction.editReply({
