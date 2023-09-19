@@ -1,26 +1,23 @@
 /* eslint-disable no-underscore-dangle */
-import { CronJob } from "cron";
 import {
 	ActivityType,
 	Client,
 	Collection,
-	EmbedBuilder,
 	Events,
 	GatewayIntentBits,
 	Interaction,
 	REST,
 	Routes,
 	SlashCommandBuilder,
-	ThreadChannel,
 } from "discord.js";
 import fs from "fs";
 import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
-import { db, User } from "./models.js";
-import { doCheckIn, createCheckInJob } from "./createCheckInJob.js";
 import config from "./config.json" assert { type: "json" };
+import { createCheckInJob, doCheckIn } from "./createCheckInJob.js";
+import { db, User } from "./models.js";
 
 interface Command {
 	data: SlashCommandBuilder;

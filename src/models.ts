@@ -22,7 +22,7 @@ export class User extends Model<
 	declare ltuid: string;
 	declare ltoken: string;
 	declare autoCheckIn: boolean;
-	declare disableDmAlerts: boolean;
+	declare dmAlerts: boolean;
 
 	declare lastCheckIn?: Date | null;
 
@@ -56,10 +56,10 @@ User.init(
 			allowNull: false,
 			defaultValue: false,
 		},
-		disableDmAlerts: {
+		dmAlerts: {
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
-			defaultValue: false,
+			defaultValue: true,
 		},
 		lastCheckIn: {
 			type: DataTypes.DATE,

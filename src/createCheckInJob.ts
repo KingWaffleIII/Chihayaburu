@@ -15,7 +15,7 @@ const doCheckIn = async (
 		const result = await account.daily.claim();
 		await user.update({ lastCheckIn: new Date() });
 
-		if (!user.disableDmAlerts) {
+		if (user.dmAlerts) {
 			const monthRewards = await account.daily.rewards();
 
 			const reward = monthRewards.awards[result.info.total_sign_day - 1];
@@ -48,9 +48,7 @@ const doCheckIn = async (
 							},
 							{
 								name: "DM alerts:",
-								value: user.disableDmAlerts
-									? "Disabled"
-									: "Enabled",
+								value: user.dmAlerts ? "Enabled" : "Disabled",
 								inline: true,
 							}
 						)
@@ -92,9 +90,7 @@ const doCheckIn = async (
 							},
 							{
 								name: "DM alerts:",
-								value: user.disableDmAlerts
-									? "Disabled"
-									: "Enabled",
+								value: user.dmAlerts ? "Enabled" : "Disabled",
 								inline: true,
 							}
 						)
