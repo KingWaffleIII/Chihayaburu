@@ -121,11 +121,14 @@ for (const user of users) {
 			60 /
 			60 /
 			24;
-		await dm.send({
-			content: `Unfortunately, there was a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). You were last checked in approx. **${Math.floor(
-				diff
-			)} days ago**. Your timer has restarted and you will now be automatically checked in again.`,
-		});
+
+		if (diff >= 1) {
+			await dm.send({
+				content: `Unfortunately, there was a problem and your automatic check-in was temporarily unavailable (the bot may have crashed or was updated/restarted). You were last checked in approx. **${Math.floor(
+					diff
+				)} day(s) ago**. Your timer has restarted and you will now be automatically checked in again.`,
+			});
+		}
 
 		const { ltuid, ltoken } = user;
 

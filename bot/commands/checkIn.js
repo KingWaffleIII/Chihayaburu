@@ -9,6 +9,11 @@ const doCheckIn = async (interaction, user, account, autoCheckIn, dmAlerts) => {
         await user.update({ lastCheckIn: new Date() });
         const monthRewards = await account.daily.rewards();
         const reward = monthRewards.awards[result.info.total_sign_day - 1];
+        // result.info.sign_cnt_missed doesn't work anymore so we have to calculate it ourselves
+        // subtract result.info.total_sign_day from today's date
+        const today = new Date();
+        const missed = today.getDate() - result.info.total_sign_day;
+        console.log(result);
         switch (result.code) {
             case 0: {
                 const embed = new EmbedBuilder()
@@ -20,7 +25,7 @@ const doCheckIn = async (interaction, user, account, autoCheckIn, dmAlerts) => {
                     inline: true,
                 }, {
                     name: "Missed:",
-                    value: `${result.info.sign_cnt_missed} days`,
+                    value: `${missed} days`,
                     inline: true,
                 }, { name: "\u200B", value: "\u200B" }, {
                     name: "Auto check-in:",
@@ -53,7 +58,7 @@ const doCheckIn = async (interaction, user, account, autoCheckIn, dmAlerts) => {
                     inline: true,
                 }, {
                     name: "Missed:",
-                    value: `${result.info.sign_cnt_missed} days`,
+                    value: `${missed} days`,
                     inline: true,
                 }, { name: "\u200B", value: "\u200B" }, {
                     name: "Auto check-in:",
@@ -106,7 +111,6 @@ export async function execute(interaction) {
     }
     const autoCheckIn = interaction.options.getBoolean("auto_check_in") ?? user.autoCheckIn;
     const dmAlerts = interaction.options.getBoolean("dm_alerts") ?? user.dmAlerts;
-    console.log(dmAlerts);
     const { ltuid, ltoken } = user;
     const genshin = new GenshinImpact({
         cookie: {
