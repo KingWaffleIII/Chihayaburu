@@ -25,6 +25,13 @@ const doCheckIn = async (
 
 		const reward = monthRewards.awards[result.info.total_sign_day - 1];
 
+		// result.info.sign_cnt_missed doesn't work anymore so we have to calculate it ourselves
+		// subtract result.info.total_sign_day from today's date
+		const today = new Date();
+		const missed = today.getDate() - result.info.total_sign_day;
+
+		console.log(result);
+
 		switch (result.code) {
 			case 0: {
 				const embed = new EmbedBuilder()
@@ -38,7 +45,7 @@ const doCheckIn = async (
 						},
 						{
 							name: "Missed:",
-							value: `${result.info.sign_cnt_missed} days`,
+							value: `${missed} days`,
 							inline: true,
 						},
 						{ name: "\u200B", value: "\u200B" },
@@ -77,7 +84,7 @@ const doCheckIn = async (
 						},
 						{
 							name: "Missed:",
-							value: `${result.info.sign_cnt_missed} days`,
+							value: `${missed} days`,
 							inline: true,
 						},
 						{ name: "\u200B", value: "\u200B" },
