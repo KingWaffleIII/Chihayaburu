@@ -1,6 +1,7 @@
-import { CronJob } from "cron";
-import { EmbedBuilder } from "discord.js";
-import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import {CronJob} from "cron";
+import {EmbedBuilder} from "discord.js";
+import {GenshinImpact, HonkaiStarRail, LanguageEnum} from "hoyoapi";
+
 const doCheckIn = async (dm, user, account) => {
     const game = account instanceof GenshinImpact ? "GI" : "HSR";
     try {
@@ -116,5 +117,5 @@ const createCheckInJob = async (client, user) => new CronJob("0 0 0 * * *", asyn
         lang: LanguageEnum.ENGLISH,
     });
     await doCheckIn(dm, user, hsr);
-});
+}, null, true, "UTC");
 export { doCheckIn, createCheckInJob };

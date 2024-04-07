@@ -1,6 +1,6 @@
 {
 	"name": "chihayaburu",
-	"version": "3.0.3",
+	"version": "3.0.4",
 	"description": "Discord bot that automates HoYoLab check-ins (Genshin Impact and Honkai: Star Rail).",
 	"main": "bot.js",
 	"type": "module",
