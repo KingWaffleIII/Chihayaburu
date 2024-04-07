@@ -1,8 +1,8 @@
-import { CronJob } from "cron";
-import { Client, DMChannel, EmbedBuilder } from "discord.js";
-import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
+import {CronJob} from "cron";
+import {Client, DMChannel, EmbedBuilder} from "discord.js";
+import {GenshinImpact, HonkaiStarRail, LanguageEnum} from "hoyoapi";
 
-import { User } from "./models.js";
+import {User} from "./models.js";
 
 const doCheckIn = async (
 	dm: DMChannel,
@@ -154,6 +154,6 @@ const createCheckInJob = async (client: Client, user: User): Promise<CronJob> =>
 		});
 
 		await doCheckIn(dm, user, hsr);
-	});
+	}, null, true, "UTC");
 
 export { doCheckIn, createCheckInJob };
