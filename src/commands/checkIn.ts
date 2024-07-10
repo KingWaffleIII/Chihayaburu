@@ -3,44 +3,51 @@ import {
 	EmbedBuilder,
 	SlashCommandBuilder,
 } from "discord.js";
-import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 
+import { checkIn, getMonthlyRewards } from "../api.js";
 import { createCheckInJob } from "../createCheckInJob.js";
 import { User } from "../models.js";
 
 const doCheckIn = async (
 	interaction: ChatInputCommandInteraction,
 	user: User,
-	account: GenshinImpact | HonkaiStarRail,
+	game: "GENSHIN_IMPACT" | "HONKAI_STAR_RAIL" | "ZENLESS_ZONE_ZERO",
 	autoCheckIn: boolean,
 	dmAlerts: boolean
 ) => {
-	const game = account instanceof GenshinImpact ? "GI" : "HSR";
-
 	try {
-		const result = await account.daily.claim();
-		await user.update({ lastCheckIn: new Date() });
+		const result = await checkIn(
+			{
+				ltuid: user.ltuid,
+				ltoken: user.ltoken,
+			},
+			game,
+			() => user.ltoken.startsWith("v2") as boolean
+		);
 
-		const monthRewards = await account.daily.rewards();
-
-		const reward = monthRewards.awards[result.info.total_sign_day - 1];
-
-		// result.info.sign_cnt_missed doesn't work anymore so we have to calculate it ourselves
-		// subtract result.info.total_sign_day from today's date
-		const today = new Date();
-		const missed = today.getDate() - result.info.total_sign_day;
-
-		console.log(result);
-
-		switch (result.code) {
+		switch (result.retcode) {
 			case 0: {
+				await user.update({ lastCheckIn: new Date() });
+
+				const monthRewards = await getMonthlyRewards(game);
+
+				const reward =
+					monthRewards.data.awards[result.data!.total_sign_day - 1];
+
+				// result.info.sign_cnt_missed doesn't work anymore so we have to calculate it ourselves
+				// subtract result.info.total_sign_day from today's date
+				const today = new Date();
+				const missed = today.getDate() - result.data!.total_sign_day;
+
 				const embed = new EmbedBuilder()
-					.setTitle(`${game}: You've been checked in!`)
+					.setTitle(
+						`${game.replaceAll("_", " ")}: You've been checked in!`
+					)
 					.setDescription(`You got ${reward.name} x${reward.cnt}!`)
 					.addFields(
 						{
 							name: "Streak:",
-							value: `${result.info.total_sign_day} days`,
+							value: `${result.data!.total_sign_day} days`,
 							inline: true,
 						},
 						{
@@ -67,27 +74,33 @@ const doCheckIn = async (
 						iconURL: "https://i.imgur.com/pq6ejR9.png",
 					});
 
-				if (account instanceof GenshinImpact) embed.setColor(0xffffff);
-				else embed.setColor(0x0c1445);
+				switch (game) {
+					case "HONKAI_STAR_RAIL": {
+						embed.setColor(0x2b6aaf);
+						break;
+					}
+					case "ZENLESS_ZONE_ZERO": {
+						embed.setColor(0xef780d);
+						break;
+					}
+					default: {
+						embed.setColor(0xfefef4);
+						break;
+					}
+				}
 
 				await interaction.followUp({ embeds: [embed] });
 				break;
 			}
 			case -5003: {
 				const embed = new EmbedBuilder()
-					.setTitle(`${game}: You've already checked in today!`)
+					.setTitle(
+						`${game.replaceAll(
+							"_",
+							" "
+						)}: You've already checked in today!`
+					)
 					.addFields(
-						{
-							name: "Streak:",
-							value: `${result.info.total_sign_day} days`,
-							inline: true,
-						},
-						{
-							name: "Missed:",
-							value: `${missed} days`,
-							inline: true,
-						},
-						{ name: "\u200B", value: "\u200B" },
 						{
 							name: "Auto check-in:",
 							value: autoCheckIn ? "Enabled" : "Disabled",
@@ -105,20 +118,33 @@ const doCheckIn = async (
 						iconURL: "https://i.imgur.com/pq6ejR9.png",
 					});
 
-				if (account instanceof GenshinImpact) embed.setColor(0xffffff);
-				else embed.setColor(0x0c1445);
+				switch (game) {
+					case "HONKAI_STAR_RAIL": {
+						embed.setColor(0x2b6aaf);
+						break;
+					}
+					case "ZENLESS_ZONE_ZERO": {
+						embed.setColor(0xef780d);
+						break;
+					}
+					default: {
+						embed.setColor(0xfefef4);
+						break;
+					}
+				}
 
 				await interaction.followUp({ embeds: [embed] });
 				break;
 			}
 			default: {
 				await interaction.editReply(
-					`An error occurred while checking you in: \`${result.status}\`. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+					`An error occurred while checking you in: \`${result.message}\`. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
 				);
 				break;
 			}
 		}
 	} catch (error) {
+		console.error(error);
 		await interaction.editReply(
 			`An error occurred while checking you in. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
 		);
@@ -159,25 +185,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	const { ltuid, ltoken } = user;
 
-	const genshin = new GenshinImpact({
-		cookie: {
-			ltuid: parseInt(ltuid),
-			ltoken,
-		},
-		lang: LanguageEnum.ENGLISH,
-	});
+	await doCheckIn(interaction, user, "GENSHIN_IMPACT", autoCheckIn, dmAlerts);
 
-	await doCheckIn(interaction, user, genshin, autoCheckIn, dmAlerts);
+	await doCheckIn(
+		interaction,
+		user,
+		"HONKAI_STAR_RAIL",
+		autoCheckIn,
+		dmAlerts
+	);
 
-	const hsr = new HonkaiStarRail({
-		cookie: {
-			ltuid: parseInt(ltuid),
-			ltoken,
-		},
-		lang: LanguageEnum.ENGLISH,
-	});
-
-	await doCheckIn(interaction, user, hsr, autoCheckIn, dmAlerts);
+	await doCheckIn(
+		interaction,
+		user,
+		"ZENLESS_ZONE_ZERO",
+		autoCheckIn,
+		dmAlerts
+	);
 
 	if (autoCheckIn && !user.autoCheckIn) {
 		const job = await createCheckInJob(interaction.client, user);

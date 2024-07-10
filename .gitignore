@@ -15,9 +15,7 @@ db.sqlite
 
 # Project
 config.json
-bot/package.json
-bot/package-lock.json
-bot/assets/
+bot/
 
 
 

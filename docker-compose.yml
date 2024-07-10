@@ -3,10 +3,6 @@ services:
         container_name: chihayaburu_bot
         image: node:slim
         volumes:
-            - ./bot/:/bot/
-            - ./package.json:/bot/package.json
-            - ./package-lock.json:/bot/package-lock.json
-            - ./src/config.json:/bot/config.json
-            - ./src/assets/:/bot/assets/
+            - ./:/bot/
         working_dir: /bot
         entrypoint: /bot/entrypoint.sh

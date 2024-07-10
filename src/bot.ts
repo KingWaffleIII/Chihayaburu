@@ -11,10 +11,10 @@ import {
 	SlashCommandBuilder,
 } from "discord.js";
 import fs from "fs";
-import { GenshinImpact, HonkaiStarRail, LanguageEnum } from "hoyoapi";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
+import { checkIn, getMonthlyRewards } from "./api.js";
 import config from "./config.json" assert { type: "json" };
 import { createCheckInJob, doCheckIn } from "./createCheckInJob.js";
 import { db, User } from "./models.js";
@@ -130,27 +130,11 @@ for (const user of users) {
 			});
 		}
 
-		const { ltuid, ltoken } = user;
+		await doCheckIn(dm, user, "GENSHIN_IMPACT");
 
-		const genshin = new GenshinImpact({
-			cookie: {
-				ltuid: parseInt(ltuid),
-				ltoken,
-			},
-			lang: LanguageEnum.ENGLISH,
-		});
+		await doCheckIn(dm, user, "HONKAI_STAR_RAIL");
 
-		await doCheckIn(dm, user, genshin);
-
-		const hsr = new HonkaiStarRail({
-			cookie: {
-				ltuid: parseInt(ltuid),
-				ltoken,
-			},
-			lang: LanguageEnum.ENGLISH,
-		});
-
-		await doCheckIn(dm, user, hsr);
+		await doCheckIn(dm, user, "ZENLESS_ZONE_ZERO");
 
 		const job = await createCheckInJob(client, user);
 		job.start();
