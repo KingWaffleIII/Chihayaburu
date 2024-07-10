@@ -2,16 +2,11 @@
 	"name": "chihayaburu",
 	"version": "3.0.4",
 	"description": "Discord bot that automates HoYoLab check-ins (Genshin Impact and Honkai: Star Rail).",
-	"main": "bot.js",
+	"main": "src/bot.ts",
 	"type": "module",
 	"scripts": {
-		"format": "npx prettier src --write",
-		"lint": "npx eslint --cache src --ext .ts --fix",
-		"prebuild": "npm run format && npm run lint",
 		"build": "tsc",
-		"prod": "npm i && npm run build",
-		"start": "node bot.js",
-		"quickstart": "docker compose stop && npm i && tsc && docker compose up"
+		"start": "node bot/bot.js"
 	},
 	"repository": {
 		"type": "git",
@@ -30,6 +25,7 @@
 	},
 	"homepage": "https://github.com/KingWaffleIII/chihayaburu#readme",
 	"dependencies": {
+		"axios": "^1.7.2",
 		"cron": "^2.2.0",
 		"discord.js": "^14.8.0",
 		"hoyoapi": "^1.2.0",
