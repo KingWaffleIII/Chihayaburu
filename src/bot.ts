@@ -15,7 +15,7 @@ import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
 import { checkIn, getMonthlyRewards } from "./api.js";
-import config from "./config.json" assert { type: "json" };
+import config from "./config.json" with { type: "json" };
 import { createCheckInJob, doCheckIn } from "./createCheckInJob.js";
 import { db, User } from "./models.js";
 

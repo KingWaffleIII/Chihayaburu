@@ -4,7 +4,7 @@ import {
 	SlashCommandBuilder,
 } from "discord.js";
 
-import { checkIn, getMonthlyRewards } from "../api.js";
+import { checkIn, getCheckInInfo, getMonthlyRewards } from "../api.js";
 import { createCheckInJob } from "../createCheckInJob.js";
 import { User } from "../models.js";
 
@@ -25,19 +25,38 @@ const doCheckIn = async (
 			() => user.ltoken.startsWith("v2") as boolean
 		);
 
+		const info = await getCheckInInfo(
+			{
+				ltuid: user.ltuid,
+				ltoken: user.ltoken,
+			},
+			game,
+			() => user.ltoken.startsWith("v2") as boolean
+		);
+
+		let missed;
+		if (!("sign_cnt_missed" in info.data)) {
+			// subtract streak from todays date
+			const dayOfMonth = new Date().getDate();
+			missed = dayOfMonth - info.data.total_sign_day;
+			if (missed < 0) missed = 0;
+		} else {
+			missed = info.data.sign_cnt_missed;
+		}
+
 		switch (result.retcode) {
 			case 0: {
 				await user.update({ lastCheckIn: new Date() });
 
 				const monthRewards = await getMonthlyRewards(game);
 
-				const reward =
-					monthRewards.data.awards[result.data!.total_sign_day - 1];
-
-				// result.info.sign_cnt_missed doesn't work anymore so we have to calculate it ourselves
-				// subtract result.info.total_sign_day from today's date
-				const today = new Date();
-				const missed = today.getDate() - result.data!.total_sign_day;
+				let reward;
+				if (info.data.total_sign_day > 0) {
+					reward =
+						monthRewards.data.awards[info.data.total_sign_day - 1];
+				} else {
+					reward = monthRewards.data.awards[0];
+				}
 
 				const embed = new EmbedBuilder()
 					.setTitle(
@@ -47,7 +66,7 @@ const doCheckIn = async (
 					.addFields(
 						{
 							name: "Streak:",
-							value: `${result.data!.total_sign_day} days`,
+							value: `${info.data.total_sign_day} days`,
 							inline: true,
 						},
 						{
@@ -101,6 +120,17 @@ const doCheckIn = async (
 						)}: You've already checked in today!`
 					)
 					.addFields(
+						{
+							name: "Streak:",
+							value: `${info.data.total_sign_day} days`,
+							inline: true,
+						},
+						{
+							name: "Missed:",
+							value: `${missed} days`,
+							inline: true,
+						},
+						{ name: "\u200B", value: "\u200B" },
 						{
 							name: "Auto check-in:",
 							value: autoCheckIn ? "Enabled" : "Disabled",
@@ -182,8 +212,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		interaction.options.getBoolean("auto_check_in") ?? user.autoCheckIn;
 	const dmAlerts =
 		interaction.options.getBoolean("dm_alerts") ?? user.dmAlerts;
-
-	const { ltuid, ltoken } = user;
 
 	await doCheckIn(interaction, user, "GENSHIN_IMPACT", autoCheckIn, dmAlerts);
 
