@@ -1,7 +1,7 @@
 import { CronJob } from "cron";
 import { Client, DMChannel, EmbedBuilder } from "discord.js";
 
-import { checkIn, getMonthlyRewards } from "./api.js";
+import { checkIn, getCheckInInfo, getMonthlyRewards } from "./api.js";
 import { User } from "./models.js";
 
 const doCheckIn = async (
@@ -19,6 +19,25 @@ const doCheckIn = async (
 			() => user.ltoken.startsWith("v2") as boolean
 		);
 
+		const info = await getCheckInInfo(
+			{
+				ltuid: user.ltuid,
+				ltoken: user.ltoken,
+			},
+			game,
+			() => user.ltoken.startsWith("v2") as boolean
+		);
+
+		let missed;
+		if (!("sign_cnt_missed" in info.data)) {
+			// subtract streak from todays date
+			const dayOfMonth = new Date().getDate();
+			missed = dayOfMonth - info.data.total_sign_day;
+			if (missed < 0) missed = 0;
+		} else {
+			missed = info.data.sign_cnt_missed;
+		}
+
 		if (user.dmAlerts) {
 			switch (result.retcode) {
 				case 0: {
@@ -27,10 +46,10 @@ const doCheckIn = async (
 					const monthRewards = await getMonthlyRewards(game);
 
 					let reward;
-					if (result.data!.total_sign_day > 0) {
+					if (info.data.total_sign_day > 0) {
 						reward =
 							monthRewards.data.awards[
-								result.data!.total_sign_day - 1
+								info.data.total_sign_day - 1
 							];
 					} else {
 						reward = monthRewards.data.awards[0];
@@ -49,12 +68,12 @@ const doCheckIn = async (
 						.addFields(
 							{
 								name: "Streak:",
-								value: `${result.data!.total_sign_day} days`,
+								value: `${info.data.total_sign_day} days`,
 								inline: true,
 							},
 							{
 								name: "Missed:",
-								value: `${result.data!.sign_cnt_missed} days`,
+								value: `${missed} days`,
 								inline: true,
 							},
 							{ name: "\u200B", value: "\u200B" },
@@ -105,6 +124,16 @@ const doCheckIn = async (
 							)}: You've already checked in today!`
 						)
 						.addFields(
+							{
+								name: "Streak:",
+								value: `${info.data.total_sign_day} days`,
+								inline: true,
+							},
+							{
+								name: "Missed:",
+								value: `${missed} days`,
+								inline: true,
+							},
 							{ name: "\u200B", value: "\u200B" },
 							{
 								name: "Auto check-in:",
