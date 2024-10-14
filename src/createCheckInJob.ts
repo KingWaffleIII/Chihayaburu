@@ -174,7 +174,7 @@ const doCheckIn = async (
 				}
 				default: {
 					await dm.send(
-						`An error occurred while checking you in: ${result.message}. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+						`${game}: An error occurred while checking you in: ${result.message}. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
 					);
 					break;
 				}
@@ -183,7 +183,7 @@ const doCheckIn = async (
 	} catch (error) {
 		console.error(error);
 		await dm.send(
-			`An error occurred while checking you in. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
+			`${game}: An error occurred while checking you in. Please check your \`ltuid\` and \`ltoken\` are correct, you can edit them with \`/edit-details\`.`
 		);
 	}
 };
