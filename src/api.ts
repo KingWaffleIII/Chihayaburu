@@ -20,7 +20,8 @@ const CHECK_IN_INFO_URLS = {
 	HONKAI_STAR_RAIL:
 		"https://sg-public-api.hoyolab.com/event/luna/os/info?lang=en-us&act_id=e202303301540311",
 	ZENLESS_ZONE_ZERO:
-		"https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091",
+		// "https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091",
+		"https://sg-public-api.hoyolab.com/event/luna/zzz/os/info?lang=en-us&act_id=e202406031448091",
 };
 
 // POST only
@@ -78,6 +79,7 @@ export async function checkIn(
 ): Promise<Response> {
 	const url = CHECK_IN_URLS[game];
 
+	const gameHeader = game === "HONKAI_STAR_RAIL" ? "hkrpg" : "zzz"; // GI doesn't need this header
 	const cookiePrefix = v2 ? "_v2" : "";
 	const headers = {
 		Cookie: `ltoken${cookiePrefix}=${cookie["ltoken"]}; ltuid${cookiePrefix}=${cookie["ltuid"]};`,
@@ -85,6 +87,7 @@ export async function checkIn(
 		Origin: "https://act.hoyolab.com",
 		Connection: "keep-alive",
 		Referer: "https://act.hoyolab.com/",
+		"x-rpc-signgame": gameHeader,
 	};
 
 	const axiosConfig = {
@@ -106,6 +109,7 @@ export async function getCheckInInfo(
 ): Promise<CheckInInfoResponse> {
 	const url = CHECK_IN_INFO_URLS[game];
 
+	const gameHeader = game === "HONKAI_STAR_RAIL" ? "hkrpg" : "zzz"; // GI doesn't need this header
 	const cookiePrefix = v2 ? "_v2" : "";
 	const headers = {
 		Cookie: `ltoken${cookiePrefix}=${cookie["ltoken"]}; ltuid${cookiePrefix}=${cookie["ltuid"]};`,
@@ -113,6 +117,8 @@ export async function getCheckInInfo(
 		Origin: "https://act.hoyolab.com",
 		Connection: "keep-alive",
 		Referer: "https://act.hoyolab.com/",
+		Accept: "application/json, text/plain, */*",
+		"x-rpc-signgame": gameHeader,
 	};
 
 	const axiosConfig = {
